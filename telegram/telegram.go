@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bytes"
+	"net/http"
 	"time"
 
 	"encoding/json"
@@ -63,6 +64,9 @@ func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
 			Body: buf,
 			Header: map[string]string{
 				"Content-Type": "application/json",
+			},
+			Client: &http.Client{
+				Timeout: time.Duration(n.cfg.Timeout) * time.Second,
 			},
 		})
 		if err != nil {
