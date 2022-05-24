@@ -1,8 +1,8 @@
 package email
 
 import (
-	"bytes"
 	"errors"
+	"io"
 	"net/mail"
 	"net/smtp"
 	"net/textproto"
@@ -58,7 +58,7 @@ func (u *userinfo) Next(fromServer []byte, more bool) ([]byte, error) {
 	return nil, nil
 }
 
-func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
+func (n *notificator) SendMessage(message io.Reader, subject string) error {
 	if len(n.cfg.Addresses) == 0 {
 		return errors.New("no addresses to send")
 	}
@@ -67,11 +67,15 @@ func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
 		Address: n.cfg.SmtpUser,
 		Name:    n.cfg.VisibleName,
 	}
+	body, err := io.ReadAll(message)
+	if err != nil {
+		return err
+	}
 	m := &email.Email{
 		From:    from.String(),
 		To:      n.cfg.Addresses,
 		Subject: subject,
-		HTML:    message.Bytes(),
+		HTML:    body,
 		Headers: textproto.MIMEHeader{},
 	}
 

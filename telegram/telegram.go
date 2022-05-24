@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"time"
 
@@ -40,8 +41,11 @@ func (n *notificator) requestPath(request string) string {
 	return fmt.Sprintf("/bot%s/%s", n.cfg.Token, request)
 }
 
-func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
-
+func (n *notificator) SendMessage(message io.Reader, subject string) error {
+	body, err := io.ReadAll(message)
+	if err != nil {
+		return err
+	}
 	for _, chat := range n.cfg.Addresses {
 
 		reqBody := struct {
@@ -50,7 +54,7 @@ func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
 			ParseMode string `json:"parse_mode"`
 		}{
 			ChatId:    chat,
-			Text:      message.String(),
+			Text:      string(body),
 			ParseMode: "html",
 		}
 		buf := new(bytes.Buffer)

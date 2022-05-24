@@ -1,7 +1,9 @@
 package notification
 
-import "bytes"
+import (
+	"io"
+)
 
 type Notificator interface {
-	SendMessage(message *bytes.Buffer, subject string) error
+	SendMessage(message io.Reader, subject string) error
 }

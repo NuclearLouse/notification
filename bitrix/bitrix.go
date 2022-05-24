@@ -1,10 +1,10 @@
 package bitrix
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -80,7 +80,7 @@ func (n *notificator) urlForNotify(userId, message string) string {
 
 }
 
-func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
+func (n *notificator) SendMessage(message io.Reader, subject string) error {
 
 	if len(n.cfg.Addresses) == 0 {
 		return errors.New("no addresses to send")
@@ -101,8 +101,12 @@ func (n *notificator) SendMessage(message *bytes.Buffer, subject string) error {
 		}
 	}
 
+	body, err := io.ReadAll(message)
+	if err != nil {
+		return err
+	}
 	for _, chat := range addresses {
-		url := n.urlForMessage(chat, message.String())
+		url := n.urlForMessage(chat, string(body))
 		mesId, err := n.send(url)
 		if err != nil {
 			return err
