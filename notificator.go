@@ -1,10 +1,6 @@
 package notification
 
-import (
-	"io"
-)
-
-//addresses []string, message io.Reader, subject string
+import "io"
 
 type Notificator interface {
 	SendMessage(message Message, attachments ...Attachment) error

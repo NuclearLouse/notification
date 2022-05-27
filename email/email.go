@@ -59,7 +59,7 @@ func (u *userinfo) Next(fromServer []byte, more bool) ([]byte, error) {
 	return nil, nil
 }
 
-func (n *notificator) SendMessage(message notification.Message, subject string, attachments ...notification.Attachment) error {
+func (n *notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
 	if len(message.Addresses) == 0 {
 		return errors.New("no addresses to send")
 	}
@@ -75,7 +75,7 @@ func (n *notificator) SendMessage(message notification.Message, subject string, 
 	m := &email.Email{
 		From:    from.String(),
 		To:      message.Addresses,
-		Subject: subject,
+		Subject: message.Subject,
 		HTML:    body,
 		Headers: textproto.MIMEHeader{},
 		Attachments: []*email.Attachment{
