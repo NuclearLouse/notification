@@ -7,11 +7,12 @@ import (
 func testNotificator() *notificator {
 	return &notificator{
 		cfg: &Config{
-			Proto:     bitrixProtocol,
-			Host:      "company-name.bitrix24.eu",
-			Token:     "777token666",
-			UserId:    "1234",
-			Addresses: []string{"999"},
+			Proto:      bitrixProtocol,
+			Host:       "company-name.bitrix24.eu",
+			UserToken:  "777token666",
+			UserID:     "1234",
+			AdminID:    "4321",
+			AdminToken: "666token777",
 		},
 	}
 }
@@ -66,7 +67,7 @@ func Test_notificator_urlForDelete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.n.urlForDelete(tt.args.messageId); got != tt.want {
+			if got := tt.n.urlForDeleteMessage(tt.args.messageId); got != tt.want {
 				t.Errorf("notificator.urlForDelete() = %v, want %v", got, tt.want)
 			}
 		})
@@ -91,7 +92,7 @@ func Test_notificator_urlForNotify(t *testing.T) {
 				userId:  "1234",
 				message: "test phrase",
 			},
-			want: "https://company-name.bitrix24.eu/rest/1234/777token666/im.notify.system.add.json?MESSAGE=test+phrase&USER_ID=1234",
+			want: "https://company-name.bitrix24.eu/rest/4321/666token777/im.notify.system.add.json?MESSAGE=test+phrase&USER_ID=1234",
 		},
 	}
 	for _, tt := range tests {

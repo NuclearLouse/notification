@@ -1,0 +1,31 @@
+notification:
+  enabled : email, bitrix, telegram
+
+  email:
+    visible_name : ServiceName
+    smtp_user    : smtpuser@mail.xyz
+    smtp_pass    : password
+    smtp_host    : smtp.mail.xyz
+    smtp_port    : 587
+    timeout      : 5s 
+    # without_auth : true
+
+  bitrix:
+    # proto             : https
+    host              : company.bitrix24.eu
+    user_token        : user-token
+    user_id           : 167 
+    bot_id            : 171
+    bot_code          : botcode
+    client_id         : clientid-or-bottoken 
+    timeout           : 5s 
+    lifetime_message  : 24h 
+    admin_id          : 121
+    admin_token       : admin-token
+
+  telegram:
+    # proto     : https
+    host      : api.telegram.org
+    token     : number:token
+    timeout   : 5s 
+    # addresses : 1234567890

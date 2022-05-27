@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"encoding/json"
 	"errors"
 	"fmt"
 
+	"redits.oculeus.com/asorokin/notification"
 	"redits.oculeus.com/asorokin/request"
 )
 
@@ -23,11 +25,11 @@ type notificator struct {
 }
 
 type Config struct {
-	Proto     string
-	Host      string
-	Token     string
-	Timeout   time.Duration
-	Addresses []int
+	Proto   string        `cfg:"proto"`
+	Host    string        `cfg:"host"`
+	Token   string        `cfg:"token"`
+	Timeout time.Duration `cfg:"timeout"`
+	// Addresses []int         `cfg:"addresses"`
 }
 
 func New(cfg *Config) *notificator {
@@ -41,19 +43,25 @@ func (n *notificator) requestPath(request string) string {
 	return fmt.Sprintf("/bot%s/%s", n.cfg.Token, request)
 }
 
-func (n *notificator) SendMessage(message io.Reader, subject string) error {
-	body, err := io.ReadAll(message)
+func (n *notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
+
+	//TODO: implement attacments for telegram
+
+	body, err := io.ReadAll(message.Content)
 	if err != nil {
 		return err
 	}
-	for _, chat := range n.cfg.Addresses {
-
+	for _, chat := range message.Addresses {
+		chatid, err := strconv.Atoi(chat)
+		if err != nil {
+			return err
+		}
 		reqBody := struct {
 			ChatId    int    `json:"chat_id"`
 			Text      string `json:"text"`
 			ParseMode string `json:"parse_mode"`
 		}{
-			ChatId:    chat,
+			ChatId:    chatid,
 			Text:      string(body),
 			ParseMode: "html",
 		}
@@ -70,7 +78,7 @@ func (n *notificator) SendMessage(message io.Reader, subject string) error {
 				"Content-Type": "application/json",
 			},
 			Client: &http.Client{
-				Timeout: time.Duration(n.cfg.Timeout) * time.Second,
+				Timeout: n.cfg.Timeout,
 			},
 		})
 		if err != nil {

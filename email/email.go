@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/jordan-wright/email"
+
+	"redits.oculeus.com/asorokin/notification"
 )
 
 type notificator struct {
@@ -16,14 +18,13 @@ type notificator struct {
 }
 
 type Config struct {
-	SmtpUser    string
-	SmtpPass    string
-	SmtpHost    string
-	SmtpPort    string
-	VisibleName string
-	Timeout     int
-	Addresses   []string
-	WithoutAuth bool
+	SmtpUser    string        `cfg:"smtp_user"`
+	SmtpPass    string        `cfg:"smtp_pass"`
+	SmtpHost    string        `cfg:"smtp_host"`
+	SmtpPort    string        `cfg:"smtp_port"`
+	VisibleName string        `cfg:"visible_name"`
+	Timeout     time.Duration `cfg:"timeout"`
+	WithoutAuth bool          `cfg:"without_auth"`
 	// TemplHTML   bool
 }
 
@@ -58,8 +59,8 @@ func (u *userinfo) Next(fromServer []byte, more bool) ([]byte, error) {
 	return nil, nil
 }
 
-func (n *notificator) SendMessage(message io.Reader, subject string) error {
-	if len(n.cfg.Addresses) == 0 {
+func (n *notificator) SendMessage(message notification.Message, subject string, attachments ...notification.Attachment) error {
+	if len(message.Addresses) == 0 {
 		return errors.New("no addresses to send")
 	}
 
@@ -67,16 +68,26 @@ func (n *notificator) SendMessage(message io.Reader, subject string) error {
 		Address: n.cfg.SmtpUser,
 		Name:    n.cfg.VisibleName,
 	}
-	body, err := io.ReadAll(message)
+	body, err := io.ReadAll(message.Content)
 	if err != nil {
 		return err
 	}
 	m := &email.Email{
 		From:    from.String(),
-		To:      n.cfg.Addresses,
+		To:      message.Addresses,
 		Subject: subject,
 		HTML:    body,
 		Headers: textproto.MIMEHeader{},
+		Attachments: []*email.Attachment{
+			{},
+		},
+	}
+	if attachments != nil {
+		for _, a := range attachments {
+			if _, err := m.Attach(a.Content, a.Filename, a.ContentType); err != nil {
+				return err
+			}
+		}
 	}
 
 	var auth smtp.Auth = nil
@@ -90,5 +101,5 @@ func (n *notificator) SendMessage(message io.Reader, subject string) error {
 	}
 	defer pool.Close()
 
-	return pool.Send(m, time.Duration(n.cfg.Timeout)*time.Second)
+	return pool.Send(m, n.cfg.Timeout)
 }
