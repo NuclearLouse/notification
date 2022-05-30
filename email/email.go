@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/mail"
 	"net/smtp"
-	"net/textproto"
 	"time"
 
 	"github.com/jordan-wright/email"
@@ -77,13 +76,12 @@ func (n *notificator) SendMessage(message notification.Message, attachments ...n
 		To:      message.Addresses,
 		Subject: message.Subject,
 		HTML:    body,
-		Headers: textproto.MIMEHeader{},
-		Attachments: []*email.Attachment{
-			{},
-		},
 	}
 	if attachments != nil {
 		for _, a := range attachments {
+			if a.Content == nil {
+				continue
+			}
 			if _, err := m.Attach(a.Content, a.Filename, a.ContentType); err != nil {
 				return err
 			}
