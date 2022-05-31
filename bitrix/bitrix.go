@@ -50,6 +50,7 @@ type Config struct {
 	AdminToken      string        `cfg:"admin_token"`
 	Timeout         time.Duration `cfg:"timeout"`
 	LifetimeMessage time.Duration `cfg:"lifetime_message"`
+	UseNotification bool          `cfg:"use_notification"`
 	// Addresses       []string      `cfg:"addresses"`
 }
 
@@ -190,13 +191,15 @@ func (n *notificator) SendMessage(message notification.Message, attachments ...n
 	if len(message.Addresses) == 0 {
 		return errors.New("no addresses to send")
 	}
-	
-	//TODO: implement attacments for Bitrix 
 
-	for _, user := range n.getUserListForNotificate(message.Addresses) {
-		url := n.urlForNotify(user, message.Subject)
-		if _, err := n.send(url); err != nil {
-			return err
+	//TODO: implement attacments for Bitrix
+
+	if n.cfg.UseNotification {
+		for _, user := range n.getUserListForNotificate(message.Addresses) {
+			url := n.urlForNotify(user, message.Subject)
+			if _, err := n.send(url); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -210,10 +213,12 @@ func (n *notificator) SendMessage(message notification.Message, attachments ...n
 		if err != nil {
 			return err
 		}
-		go func() {
-			time.Sleep(n.cfg.LifetimeMessage * time.Hour)
-			n.send(n.urlForBotDeleteMessage(fmt.Sprintf("%d", mesId)))
-		}()
+		if n.cfg.LifetimeMessage > 0 {
+			go func() {
+				time.Sleep(n.cfg.LifetimeMessage)
+				n.send(n.urlForBotDeleteMessage(fmt.Sprintf("%d", mesId)))
+			}()
+		}
 	}
 
 	return nil

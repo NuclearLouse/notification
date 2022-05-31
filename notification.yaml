@@ -20,6 +20,7 @@ notification:
     client_id         : clientid-or-bottoken 
     timeout           : 5s 
     lifetime_message  : 24h 
+    use_notification  : true
     admin_id          : 121
     admin_token       : admin-token
 
