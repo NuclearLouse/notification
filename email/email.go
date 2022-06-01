@@ -93,11 +93,5 @@ func (n *notificator) SendMessage(message notification.Message, attachments ...n
 		auth = loginAuth(n.cfg.SmtpUser, n.cfg.SmtpPass)
 	}
 
-	pool, err := email.NewPool(n.cfg.SmtpHost+":"+n.cfg.SmtpPort, 1, auth)
-	if err != nil {
-		return err
-	}
-	defer pool.Close()
-
-	return pool.Send(m, n.cfg.Timeout)
+	return m.Send(n.cfg.SmtpHost+":"+n.cfg.SmtpPort, auth)
 }
