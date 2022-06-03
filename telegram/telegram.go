@@ -20,7 +20,7 @@ const (
 	requestMessage   = "sendMessage"
 )
 
-type notificator struct {
+type Notificator struct {
 	cfg *Config
 }
 
@@ -32,18 +32,18 @@ type Config struct {
 	// Addresses []int         `cfg:"addresses"`
 }
 
-func New(cfg *Config) *notificator {
+func New(cfg *Config) *Notificator {
 	if cfg.Proto == "" {
 		cfg.Proto = telegramProtocol
 	}
-	return &notificator{cfg}
+	return &Notificator{cfg}
 }
 
-func (n *notificator) requestPath(request string) string {
+func (n *Notificator) requestPath(request string) string {
 	return fmt.Sprintf("/bot%s/%s", n.cfg.Token, request)
 }
 
-func (n *notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
+func (n *Notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
 
 	//TODO: implement attacments for telegram
 

@@ -12,7 +12,7 @@ import (
 	"redits.oculeus.com/asorokin/notification"
 )
 
-type notificator struct {
+type Notificator struct {
 	cfg *Config
 }
 
@@ -27,8 +27,8 @@ type Config struct {
 	// TemplHTML   bool
 }
 
-func New(cfg *Config) *notificator {
-	return &notificator{cfg}
+func New(cfg *Config) *Notificator {
+	return &Notificator{cfg}
 }
 
 type userinfo struct {
@@ -58,7 +58,7 @@ func (u *userinfo) Next(fromServer []byte, more bool) ([]byte, error) {
 	return nil, nil
 }
 
-func (n *notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
+func (n *Notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
 	if len(message.Addresses) == 0 {
 		return errors.New("no addresses to send")
 	}
@@ -93,5 +93,19 @@ func (n *notificator) SendMessage(message notification.Message, attachments ...n
 		auth = loginAuth(n.cfg.SmtpUser, n.cfg.SmtpPass)
 	}
 
-	return m.Send(n.cfg.SmtpHost+":"+n.cfg.SmtpPort, auth)
+	var sendChannel chan error
+	if n.cfg.Timeout > 0 {
+		sendChannel = make(chan error, 1)
+		go func() {
+			sendChannel <- m.Send(n.cfg.SmtpHost+":"+n.cfg.SmtpPort, auth)
+		}()
+	} else {
+		return m.Send(n.cfg.SmtpHost+":"+n.cfg.SmtpPort, auth)
+	}
+	select {
+	case sendErr := <-sendChannel:
+		return sendErr
+	case <-time.After(n.cfg.Timeout):
+		return errors.New("email sending timed out")
+	}
 }

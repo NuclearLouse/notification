@@ -1,5 +1,5 @@
 notification:
-  enabled : email, bitrix, telegram
+  enabled : [email, bitrix, telegram]
 
   email:
     visible_name : ServiceName
@@ -29,4 +29,4 @@ notification:
     host      : api.telegram.org
     token     : number:token
     timeout   : 5s 
-    # addresses : 1234567890
+    # addresses : [1234567890]

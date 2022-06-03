@@ -34,7 +34,7 @@ const (
 	// reqValueAttach  = "ATTACH"
 )
 
-type notificator struct {
+type Notificator struct {
 	cfg *Config
 }
 
@@ -54,22 +54,22 @@ type Config struct {
 	// Addresses       []string      `cfg:"addresses"`
 }
 
-func New(cfg *Config) *notificator {
+func New(cfg *Config) *Notificator {
 	if cfg.Proto == "" {
 		cfg.Proto = bitrixProtocol
 	}
-	return &notificator{cfg}
+	return &Notificator{cfg}
 }
 
-func (n *notificator) requestPath(request string) string {
+func (n *Notificator) requestPath(request string) string {
 	return fmt.Sprintf("/rest/%s/%s/%s", n.cfg.UserID, n.cfg.UserToken, request)
 }
 
-func (n *notificator) requestPathAdmin(request string) string {
+func (n *Notificator) requestPathAdmin(request string) string {
 	return fmt.Sprintf("/rest/%s/%s/%s", n.cfg.AdminID, n.cfg.AdminToken, request)
 }
 
-func (n *notificator) urlForMessage(dialogId, message string) string {
+func (n *Notificator) urlForMessage(dialogId, message string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPath(requestMessage),
@@ -79,7 +79,7 @@ func (n *notificator) urlForMessage(dialogId, message string) string {
 		).URL().String()
 }
 
-func (n *notificator) urlForBotMessage(dialogId, message string) string {
+func (n *Notificator) urlForBotMessage(dialogId, message string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPath(requestBotMessage),
@@ -91,7 +91,7 @@ func (n *notificator) urlForBotMessage(dialogId, message string) string {
 		).URL().String()
 }
 
-func (n *notificator) urlForDeleteMessage(messageId string) string {
+func (n *Notificator) urlForDeleteMessage(messageId string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPath(requestDelete),
@@ -99,7 +99,7 @@ func (n *notificator) urlForDeleteMessage(messageId string) string {
 		).URL().String()
 }
 
-func (n *notificator) urlForBotDeleteMessage(messageId string) string {
+func (n *Notificator) urlForBotDeleteMessage(messageId string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPath(requestBotMessageDelete),
@@ -110,7 +110,7 @@ func (n *notificator) urlForBotDeleteMessage(messageId string) string {
 		).URL().String()
 }
 
-func (n *notificator) urlForNotify(userId, message string) string {
+func (n *Notificator) urlForNotify(userId, message string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPathAdmin(requestNotify),
@@ -119,7 +119,7 @@ func (n *notificator) urlForNotify(userId, message string) string {
 		).URL().String()
 }
 
-func (n *notificator) urlForUserList(chatId string) string {
+func (n *Notificator) urlForUserList(chatId string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPath(requestUserList),
@@ -127,17 +127,17 @@ func (n *notificator) urlForUserList(chatId string) string {
 		).URL().String()
 }
 
-func (n *notificator) urlForBotUserList(chatId string) string {
+func (n *Notificator) urlForBotUserList(chatId string) string {
 	return request.NewAddress(n.cfg.Proto, n.cfg.Host).
 		SetEndpoint(
 			n.requestPath(requestBotUserList),
-			reqValueChatId, chatId,
+			reqValueDialog, chatId,
 			reqValueBotId, n.cfg.BotID,
 			reqValueClientId, n.cfg.ClientID,
 		).URL().String()
 }
 
-func (n *notificator) getUserListForNotificate(chats []string) []string {
+func (n *Notificator) getUserListForNotificate(chats []string) []string {
 	var users []string
 	for _, chat := range chats {
 		if strings.HasPrefix(chat, "chat") {
@@ -186,7 +186,7 @@ func (n *notificator) getUserListForNotificate(chats []string) []string {
 	return users
 }
 
-func (n *notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
+func (n *Notificator) SendMessage(message notification.Message, attachments ...notification.Attachment) error {
 
 	if len(message.Addresses) == 0 {
 		return errors.New("no addresses to send")
@@ -224,7 +224,7 @@ func (n *notificator) SendMessage(message notification.Message, attachments ...n
 	return nil
 }
 
-func (n *notificator) send(url string) (int64, error) {
+func (n *Notificator) send(url string) (int64, error) {
 
 	res, err := request.Do(&request.Params{
 		URL: url,

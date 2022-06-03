@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-func testNotificator() *notificator {
-	return &notificator{
+func testNotificator() *Notificator {
+	return &Notificator{
 		cfg: &Config{
 			Proto:      bitrixProtocol,
 			Host:       "company-name.bitrix24.eu",
@@ -23,7 +23,7 @@ func Test_notificator_urlForMessage(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		n    *notificator
+		n    *Notificator
 		args args
 		want string
 	}{
@@ -52,7 +52,7 @@ func Test_notificator_urlForDelete(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		n    *notificator
+		n    *Notificator
 		args args
 		want string
 	}{
@@ -81,7 +81,7 @@ func Test_notificator_urlForNotify(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		n    *notificator
+		n    *Notificator
 		args args
 		want string
 	}{
