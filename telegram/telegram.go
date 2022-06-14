@@ -76,7 +76,7 @@ func (n *Notificator) SendMessage(message notification.Message, attachments ...n
 
 		res, err := request.Do(&request.Params{
 			URL: request.NewAddress(n.cfg.Proto, n.cfg.Host).
-				SetEndpoint(n.requestPath(requestMessage)).URL().String(),
+				SetEndpoint(n.requestPath(requestMessage)),
 			Body: buf,
 			Header: map[string]string{
 				"Content-Type": "application/json",
