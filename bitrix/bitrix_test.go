@@ -103,3 +103,4 @@ func Test_notificator_urlForNotify(t *testing.T) {
 		})
 	}
 }
+

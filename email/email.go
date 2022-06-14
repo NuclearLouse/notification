@@ -16,6 +16,10 @@ type Notificator struct {
 	cfg *Config
 }
 
+func (n *Notificator) String() string {
+	return "email"
+}
+
 type Config struct {
 	SmtpUser    string        `cfg:"smtp_user"`
 	SmtpPass    string        `cfg:"smtp_pass"`

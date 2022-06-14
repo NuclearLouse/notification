@@ -52,3 +52,17 @@ func (mr *MockNotificatorMockRecorder) SendMessage(arg0 interface{}, arg1 ...int
 	varargs := append([]interface{}{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockNotificator)(nil).SendMessage), varargs...)
 }
+
+// String mocks base method.
+func (m *MockNotificator) String() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "String")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// String indicates an expected call of String.
+func (mr *MockNotificatorMockRecorder) String() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockNotificator)(nil).String))
+}

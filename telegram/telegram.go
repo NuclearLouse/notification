@@ -24,6 +24,10 @@ type Notificator struct {
 	cfg *Config
 }
 
+func (n *Notificator) String() string {
+	return "telegram"
+}
+
 type Config struct {
 	Proto   string        `cfg:"proto"`
 	Host    string        `cfg:"host"`

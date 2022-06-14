@@ -22,6 +22,7 @@ const (
 	requestBotMessage       = "imbot.message.add.json"
 	requestBotMessageDelete = "imbot.message.delete"
 	requestBotUserList      = "imbot.chat.user.list.json"
+	requestUserInfo         = "im.user.get"
 	reqValueChatId          = "CHAT_ID"
 	reqValueMessId          = "MESSAGE_ID"
 	reqValueDialog          = "DIALOG_ID"
@@ -31,11 +32,16 @@ const (
 	reqValueBotId           = "BOT_ID"
 	reqValueClientId        = "CLIENT_ID"
 	reqValueComplete        = "COMPLETE"
+	reqValueID              = "ID"
 	// reqValueAttach  = "ATTACH"
 )
 
 type Notificator struct {
 	cfg *Config
+}
+
+func (n *Notificator) String() string {
+	return "bitrix"
 }
 
 type Config struct {
@@ -138,6 +144,7 @@ func (n *Notificator) urlForBotUserList(chatId string) string {
 }
 
 func (n *Notificator) getUserListForNotificate(chats []string) []string {
+	//TODO: переделать под универсальный ответ
 	var users []string
 	for _, chat := range chats {
 		if strings.HasPrefix(chat, "chat") {
@@ -195,11 +202,16 @@ func (n *Notificator) SendMessage(message notification.Message, attachments ...n
 	//TODO: implement attacments for Bitrix
 
 	if n.cfg.UseNotification {
-		for _, user := range n.getUserListForNotificate(message.Addresses) {
-			url := n.urlForNotify(user, message.Subject)
-			if _, err := n.send(url); err != nil {
-				return err
-			}
+		for _, u := range n.getUserListForNotificate(message.Addresses) {
+			//TODO: в рутинах и без чтения ошибок
+			user := u
+			go func() {
+				url := n.urlForNotify(user, message.Subject)
+				n.send(url)
+			}()
+			// if _, err := n.send(url); err != nil {
+			// 	return err
+			// }
 		}
 	}
 
@@ -209,22 +221,51 @@ func (n *Notificator) SendMessage(message notification.Message, attachments ...n
 	}
 	for _, chat := range message.Addresses {
 		url := n.urlForBotMessage(chat, string(body))
-		mesId, err := n.send(url)
+		res, err := n.send(url)
 		if err != nil {
-			return err
+			return err // error by DoRequest or decode response json
 		}
-		if n.cfg.LifetimeMessage > 0 {
-			go func() {
-				time.Sleep(n.cfg.LifetimeMessage)
-				n.send(n.urlForBotDeleteMessage(fmt.Sprintf("%d", mesId)))
-			}()
+
+		if res.StatusCode != 200 {
+			return fmt.Errorf("status: %s error: %s : %s", res.Status, res.Error, res.Description)
 		}
+
+		switch result := res.Result.(type) {
+		case int, float64:
+			if n.cfg.LifetimeMessage > 0 {
+				go func() {
+					time.Sleep(n.cfg.LifetimeMessage)
+					n.send(n.urlForBotDeleteMessage(fmt.Sprintf("%v", result)))
+				}()
+			}
+			// case bool:
+			//пока не надо никак обрабатывать
+		}
+
 	}
 
 	return nil
 }
 
-func (n *Notificator) send(url string) (int64, error) {
+type (
+	response struct {
+		Status     string
+		StatusCode int
+		Result     interface{} `json:"result"`
+		Time       struct {
+			Start      float64   `json:"start"`
+			Finish     float64   `json:"finish"`
+			Duration   float64   `json:"duration"`
+			Processing float64   `json:"processing"`
+			DateStart  time.Time `json:"date_start"`
+			DateFinish time.Time `json:"date_finish"`
+		} `json:"time"`
+		Error       string `json:"error"`
+		Description string `json:"error_description"`
+	}
+)
+
+func (n *Notificator) send(url string) (*response, error) {
 
 	res, err := request.Do(&request.Params{
 		URL: url,
@@ -233,46 +274,18 @@ func (n *Notificator) send(url string) (int64, error) {
 		},
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer res.Body.Close()
 
-	var result struct {
-		Result int64 `json:"result"`
-		Time   struct {
-			Start      float64   `json:"start"`
-			Finish     float64   `json:"finish"`
-			Duration   float64   `json:"duration"`
-			Processing float64   `json:"processing"`
-			DateStart  time.Time `json:"date_start"`
-			DateFinish time.Time `json:"date_finish"`
-		} `json:"time"`
+	result := &response{
+		StatusCode: res.StatusCode,
+		Status:     res.Status,
 	}
 
-	if res.StatusCode == 200 {
-		//Success:
-		// при удалении сообщения "result": 868197, type int64
-		// при удалении сообщения "result": true, type bool - не обрабатываю результат
-		if err := json.NewDecoder(res.Body).Decode(&result); err != nil {
-			return result.Result, fmt.Errorf("decode result json: %w", err)
-		}
+	if err := json.NewDecoder(res.Body).Decode(result); err != nil {
+		return result, fmt.Errorf("decode response json: %w", err)
+	}
 
-		if result.Result == 0 {
-			return result.Result, errors.New("no result in the response")
-		}
-
-		return result.Result, nil
-	}
-	//Error:
-	var resultErr struct {
-		Error            string `json:"error"`
-		ErrorDescription string `json:"error_description"`
-	}
-	if err := json.NewDecoder(res.Body).Decode(&resultErr); err != nil {
-		return result.Result, fmt.Errorf("decode result json: %w", err)
-	}
-	if resultErr.Error != "" {
-		return result.Result, fmt.Errorf("%s: %s", resultErr.Error, resultErr.ErrorDescription)
-	}
-	return 0, errors.New("unsupported bitrix-api response")
+	return result, nil
 }
